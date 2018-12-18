@@ -7,11 +7,16 @@
     <style type="text/css">
         body {
             margin: 0;
+            
         }
+        /* canvas{
+            background-image: url('assets/Caverns.png');
+        } */
+
     </style>
 </head>
 <body>
-<script type="text/javascript">
+<script type="text/javascript" >
 var config = {
 type: Phaser.AUTO,
 width: 800,
@@ -42,9 +47,15 @@ function preload ()
     this.load.image('vine','assets/vine.png');
     this.load.image('rock','assets/rock.png');
     this.load.image('wood','assets/wood_3.png');
-    this.load.image('waterFlow','assets/waterFlow.png');
+    this.load.image('door','assets/closedDoor_1.png')
+    this.load.image('openDoor','assets/openDoor_1.png')
+    this.load.image('waterfall','assets/waterfall_2.png');
     this.load.image('box','assets/box.png');
-    this.load.image('tree','assets/tree.png')
+    this.load.image('tree','assets/tree.png');
+    this.load.image('smallwood','assets/smallwood.png');
+    this.load.image('pipe','assets/pipe.png');
+    this.load.image('wallDoor','assets/64x64_wall.png');
+    this.load.image('Cavern','assets/canverns.png');
     //this.load.image('star', 'assets/star.png');
     //this.load.image('bomb', 'assets/bomb.png');
     this.load.image('inventory', 'assets/inventory.png');
@@ -67,6 +78,12 @@ var inv;
 function create ()
 {
        //  A simple background for our game
+       this.add.image(400, 290, 'Cavern').setScale(1.0);;
+   // Display background
+   //this.bg= this.game.add.tileSprite(200, 200, game.stage.bounds.width, game.cache.getImage('Cavern').height, 'Cavern');
+
+ 
+
 
       //  The platforms group contains the ground and the 2 ledges we can jump on
     platforms = this.physics.add.staticGroup();
@@ -77,9 +94,15 @@ function create ()
     box = this.physics.add.staticGroup();
     vine = this.physics.add.staticGroup();
     rock = this.physics.add.staticGroup();
+    smallwood =  this.physics.add.staticGroup();
     wood = this.physics.add.sprite(100, 480, 'wood').setScale(0.5);
-    waterFlow = this.physics.add.staticGroup();
+    // water = this.physics.add.sprite(100, 480, 'water').setScale(0.5);
+    waterfall = this.physics.add.staticGroup();
+    door = this.physics.add.staticGroup();
+    openDoor = this.physics.add.staticGroup();
     tree = this.physics.add.staticGroup();
+    pipe = this.physics.add.staticGroup();
+    wallDoor = this.physics.add.staticGroup();
     //bomb = this.physics.add.sprite(300, 450, 'bomb');
    // star = this.physics.add.sprite(500, 450, 'star');
 
@@ -106,6 +129,12 @@ function create ()
     wall.create(100, 360, 'wall');
     wall.create(150, 360, 'wall');
 
+
+    //Wall of doors
+    wallDoor.create(768,130,'wallDoor');
+    wallDoor.create(710,130,'wallDoor');
+    wallDoor.create(650,130,'wallDoor');
+
     // The vine in wall
     vine.create(150, 390, 'vine');
 
@@ -118,16 +147,26 @@ function create ()
     wood.setBounce(0.2);
     wood.setCollideWorldBounds(true);
 
-    //The waterFlow
-    waterFlow.create(770,40,'waterFlow');
+    //The small wood
+    smallwood.create(30,565,'smallwood').setScale(2);
 
+    //The door
+    door.create(770,58,'door');
+   
 
     //The tree
     tree.create(720,490,'tree');
 
+    //The waterfall
+    waterfall.create(30,510,'waterfall').setScale(0.3);
 
-    // The player and its settings
-    player = this.physics.add.sprite(300, 450, 'dude');
+
+    //The pipe
+    pipe.create(0,498,'pipe').setScale(0.109);
+
+
+    // The player and its settings   // 300, 450,
+    player = this.physics.add.sprite(710,50, 'dude');
     //  Player physics properties. Give the little guy a slight bounce.
     player.setBounce(0.2);
     player.setCollideWorldBounds(true);
@@ -165,10 +204,10 @@ function create ()
      this.physics.add.collider(player, platforms);
      this.physics.add.collider(player, wall);
      this.physics.add.collider(player, box);
-     this.physics.add.collider(player, wood);
+     //this.physics.add.collider(player, wood);
      this.physics.add.collider(platforms, rock);
-     
-
+     this.physics.add.collider(player, wallDoor);
+     this.physics.add.collider(openDoor, wallDoor);
     //  this.physics.add.collider(star, platforms);
     //  this.physics.add.collider(bomb, platforms);
 
@@ -176,7 +215,8 @@ function create ()
     cursors = this.input.keyboard.createCursorKeys();
     this.physics.add.overlap(player, rock, collectItem, null, this);
     this.physics.add.overlap(player, vine, collectItem, null, this);
-
+    this.physics.add.overlap(player, smallwood, collectItem, null, this);
+    this.physics.add.overlap(player, door, collectItem, null, this);
 
             this.x = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.X);
 
@@ -189,6 +229,12 @@ function create ()
                     } else if (item.texture.key === 'vine') {
                         vine = this.add.image(359, 65, item.texture.key);
                         addItem(vine);
+                    }else if (item.texture.key === 'smallwood') {
+                        smallwood = this.add.image(359, 65, item.texture.key);
+                        addItem(smallwood);
+                    }else if (item.texture.key === 'door') {
+                        openDoor.create(770,58,'openDoor');
+                        item.disableBody(true, true);
                     }
                 }
             }
