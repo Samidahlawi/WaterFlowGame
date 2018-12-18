@@ -41,7 +41,7 @@ function preload ()
     this.load.image('wall','assets/64x64_wall.png');
     this.load.image('vine','assets/vine.png');
     this.load.image('rock','assets/rock.png');
-    this.load.image('wood','assets/wood_64x64.png');
+    this.load.image('wood','assets/wood_3.png');
     this.load.image('waterFlow','assets/waterFlow.png');
     this.load.image('box','assets/box.png');
     this.load.image('tree','assets/tree.png')
@@ -77,13 +77,13 @@ function create ()
     box = this.physics.add.staticGroup();
     vine = this.physics.add.staticGroup();
     rock = this.physics.add.staticGroup();
-    wood = this.physics.add.staticGroup();
+    wood = this.physics.add.sprite(100, 480, 'wood').setScale(0.5);
     waterFlow = this.physics.add.staticGroup();
     tree = this.physics.add.staticGroup();
     //bomb = this.physics.add.sprite(300, 450, 'bomb');
    // star = this.physics.add.sprite(500, 450, 'star');
 
-
+   
 
 
     platforms.create(50, 583, 'ground').refreshBody();
@@ -114,10 +114,10 @@ function create ()
 
 
     //The wood
-    wood.create(100, 410, 'wood');
-    wood.create(100, 470, 'wood');
-    wood.create(100, 520, 'wood');
-    wood.create(100, 540, 'wood');
+    wood.angle = 30;
+    wood.setBounce(0.2);
+    wood.setCollideWorldBounds(true);
+
     //The waterFlow
     waterFlow.create(770,40,'waterFlow');
 
@@ -160,13 +160,14 @@ function create ()
     cursors = this.input.keyboard.createCursorKeys();
 
      //  Collide the player with the platforms
+     this.physics.add.collider(platforms, wood);
+     this.physics.add.collider(wall,wood);
      this.physics.add.collider(player, platforms);
      this.physics.add.collider(player, wall);
      this.physics.add.collider(player, box);
      this.physics.add.collider(player, wood);
      this.physics.add.collider(platforms, rock);
-     this.physics.add.collider(platforms, wood);
-
+     
 
     //  this.physics.add.collider(star, platforms);
     //  this.physics.add.collider(bomb, platforms);
