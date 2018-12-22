@@ -1,301 +1,630 @@
-<!doctype html> 
-<html lang="en"> 
-<head> 
+<!doctype html>
+<html lang="en">
+
+<head>
     <meta charset="UTF-8" />
     <title>Making your first Phaser 3 Game - Part 10</title>
+    <link rel="stylesheet" href="style.css">
     <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
     <style type="text/css">
         body {
             margin: 0;
-            
         }
-        /* canvas{
-            background-image: url('assets/Caverns.png');
-        } */
-
     </style>
 </head>
+
 <body>
-<script type="text/javascript" >
-var config = {
-type: Phaser.AUTO,
-width: 800,
-height: 600,
-physics: {
-default: 'arcade',
-arcade: {
-gravity: { y: 300 },
-debug: false
-}
-},
-scene: {
-preload: preload,
-create: create,
-update: update
-}
-};
+    <div id="inv-div">
+        <div id="slot-1"></div>
+        <div id="slot-2"></div>
+        <div id="slot-3"></div>
+        <div id="slot-4"></div>
+        <div id="slot-5"></div>
+        <div id="slot-6"></div>
+    </div>
+    <script type="text/javascript">
+
+        var invDiv = document.querySelector('#inv-div');
+        var slot1 = document.querySelector('#slot-1');
+        var slot2 = document.querySelector('#slot-2');
+        var slot3 = document.querySelector('#slot-3');
+        var slot4 = document.querySelector('#slot-4');
+        var slot5 = document.querySelector('#slot-5');
+        var slot6 = document.querySelector('#slot-6');
 
 
-var game = new Phaser.Game(config);
+        var config = {
+            type: Phaser.AUTO,
+            width: 800,
+            height: 600,
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: { y: 300 },
+                    debug: false
+                }
+            },
+            scene: {
+                preload: preload,
+                create: create,
+                update: update
+            }
+        };
+
+
+        var game = new Phaser.Game(config);
 
 
 
-function preload ()
-{
-    this.load.image('ground', 'assets/ground_2.png');
-    this.load.image('wall','assets/64x64_wall.png');
-    this.load.image('vine','assets/vine.png');
-    this.load.image('rock','assets/rock.png');
-    this.load.image('wood','assets/wood_3.png');
-    this.load.image('door','assets/closedDoor_1.png')
-    this.load.image('openDoor','assets/openDoor_1.png')
-    this.load.image('waterfall','assets/waterfall_2.png');
-    this.load.image('box','assets/box.png');
-    this.load.image('tree','assets/tree.png');
-    this.load.image('smallwood','assets/smallwood.png');
-    this.load.image('pipe','assets/pipe.png');
-    this.load.image('wallDoor','assets/64x64_wall.png');
-    this.load.image('Cavern','assets/canverns.png');
-    //this.load.image('star', 'assets/star.png');
-    //this.load.image('bomb', 'assets/bomb.png');
-    this.load.image('inventory', 'assets/inventory.png');
+        function preload() {
+            // /////
+            var progressBar = this.add.graphics();
+            var progressBox = this.add.graphics();
+            progressBox.fillStyle(0x222222, 0.8);
+            progressBox.fillRect(240, 270, 320, 50);
 
-    this.load.spritesheet('dude', 'assets/dude.png', { frameWidth: 32, frameHeight: 48 });
-}
+            var width = this.cameras.main.width;
+            var height = this.cameras.main.height;
+            var loadingText = this.make.text({
+                x: width / 2,
+                y: height / 2 - 50,
+                text: 'Loading...',
+                style: {
+                    font: '20px monospace',
+                    fill: '#ffffff'
+                }
+            });
+            loadingText.setOrigin(0.5, 0.5);
 
-var player;
-var stars;
-var bombs;
-var platforms;
-var cursors;
-var score = 0;
-var gameOver = false;
-var scoreText;
-var inventory = [];
-var inv;
+            var percentText = this.make.text({
+                x: width / 2,
+                y: height / 2 - 5,
+                text: '0%',
+                style: {
+                    font: '18px monospace',
+                    fill: '#ffffff'
+                }
+            });
+            percentText.setOrigin(0.5, 0.5);
 
+            var assetText = this.make.text({
+                x: width / 2,
+                y: height / 2 + 50,
+                text: '',
+                style: {
+                    font: '18px monospace',
+                    fill: '#ffffff'
+                }
+            });
+            assetText.setOrigin(0.5, 0.5);
 
-function create ()
-{
-       //  A simple background for our game
-       this.add.image(400, 290, 'Cavern').setScale(1.0);;
-   // Display background
-   //this.bg= this.game.add.tileSprite(200, 200, game.stage.bounds.width, game.cache.getImage('Cavern').height, 'Cavern');
+            this.load.on('progress', function (value) {
+                percentText.setText(parseInt(value * 100) + '%');
+                progressBar.clear();
+                progressBar.fillStyle(0xffffff, 1);
+                progressBar.fillRect(250, 280, 300 * value, 30);
+            });
 
- 
+            this.load.on('fileprogress', function (file) {
+                assetText.setText('Loading asset: ' + file.key);
+            });
 
+            this.load.on('complete', function () {
+                progressBar.destroy();
+                progressBox.destroy();
+                loadingText.destroy();
+                percentText.destroy();
+                assetText.destroy();
+            });
 
-      //  The platforms group contains the ground and the 2 ledges we can jump on
-    platforms = this.physics.add.staticGroup();
-    inv = this.add.image(380, 70, 'inventory').setScale(2);
+            this.load.image('logo', 'rock.png');
+            for (var i = 0; i < 500; i++) {
+                this.load.image('logo' + i, 'zenvalogo.png');
+            }
 
+            //////
+            this.load.image("background", "assets/background.png");
+            this.load.image("stars", "assets/stars.png");
+            this.load.image("stars2", "assets/stars2.png");
+            this.load.image("clouds", "assets/clouds.png");
+            this.load.image("clouds2", "assets/clouds2.png");
+            this.load.image("layer3", "assets/layer3.png");
+            this.load.image("layer4", "assets/layer4.png");
+            this.load.image("mountains", "assets/mountains.png");
+            this.load.image("mountains", "assets/mountains.png");
+            this.load.image('ground', 'assets/ground_2.png');
+            this.load.image('plant', 'assets/plant.png');
+            this.load.image('bush', 'assets/bush.png');
+            this.load.image('sea', 'assets/water.png');
+            this.load.image('wall', 'assets/platformTiles.png');
+            this.load.image('wall2', 'assets/64x64_wall2.png');
+            this.load.image('wall3', 'assets/64x64_wall3.png');
+            this.load.image('vine', 'assets/vine.png');
+            this.load.image('rock', 'assets/rock.png');
+            this.load.image('wood', 'assets/wood_4.png');
+            this.load.image('firewood', 'assets/firewood.png');
+            this.load.image('wood2', 'assets/wood_6.png');
+            this.load.image('tinyWood', 'assets/woodTiny.png');
+            this.load.image('box', 'assets/box.png');
+            this.load.image('axe', 'assets/axe.png');
+            this.load.image('tree', 'assets/tree.png')
+            this.load.image('door', 'assets/closedDoor_1.png')
+            this.load.image('openDoor', 'assets/openDoor_1.png')
+            this.load.image('waterfall', 'assets/waterfall_2.png');
+            this.load.image('smallwood', 'assets/smallwood.png');
+            this.load.image('pipe', 'assets/pipe.png');
+            this.load.image('wallDoor', 'assets/64x64_wall.png');
+            // this.load.image('Cavern', 'assets/canverns.png');
+            this.load.image('inventory', 'assets/inventory2.png');
+            this.load.image('sky', 'assets/sky.png');
 
-    wall = this.physics.add.staticGroup();
-    box = this.physics.add.staticGroup();
-    vine = this.physics.add.staticGroup();
-    rock = this.physics.add.staticGroup();
-    smallwood =  this.physics.add.staticGroup();
-    wood = this.physics.add.sprite(100, 480, 'wood').setScale(0.5);
-    // water = this.physics.add.sprite(100, 480, 'water').setScale(0.5);
-    waterfall = this.physics.add.staticGroup();
-    door = this.physics.add.staticGroup();
-    openDoor = this.physics.add.staticGroup();
-    tree = this.physics.add.staticGroup();
-    pipe = this.physics.add.staticGroup();
-    wallDoor = this.physics.add.staticGroup();
-    //bomb = this.physics.add.sprite(300, 450, 'bomb');
-   // star = this.physics.add.sprite(500, 450, 'star');
+            this.load.spritesheet('dude', 'assets/dude.png', { frameWidth: 32, frameHeight: 48 });
+            this.load.spritesheet('dudeAxe', 'assets/dudeAxe.png', { frameWidth: 32, frameHeight: 48 });
+        }
 
-   
-
-
-    platforms.create(50, 583, 'ground').refreshBody();
-    platforms.create(140, 583, 'ground').refreshBody();
-    platforms.create(230, 583, 'ground').refreshBody();
-    platforms.create(320, 583, 'ground').refreshBody();
-    platforms.create(410, 583, 'ground').refreshBody();
-    platforms.create(500, 583, 'ground').refreshBody();
-    platforms.create(590, 583, 'ground').refreshBody();
-    platforms.create(680, 583, 'ground').refreshBody();
-    platforms.create(770, 583, 'ground').refreshBody();
-
-
-    // the box
-    box.create(20, 310, 'box').setScale(2);
-
-    //  Now let's create some ledges
-    wall.create(0, 360, 'wall');
-    wall.create(50, 360, 'wall');
-    wall.create(100, 360, 'wall');
-    wall.create(150, 360, 'wall');
-
-
-    //Wall of doors
-    wallDoor.create(768,130,'wallDoor');
-    wallDoor.create(710,130,'wallDoor');
-    wallDoor.create(650,130,'wallDoor');
-
-    // The vine in wall
-    vine.create(150, 390, 'vine');
-
-    //The rock 
-    rock.create(766, 560, 'rock');
-
-
-    //The wood
-    wood.angle = 30;
-    wood.setBounce(0.2);
-    wood.setCollideWorldBounds(true);
-
-    //The small wood
-    smallwood.create(30,565,'smallwood').setScale(2);
-
-    //The door
-    door.create(770,58,'door');
-   
-
-    //The tree
-    tree.create(720,490,'tree');
-
-    //The waterfall
-    waterfall.create(30,510,'waterfall').setScale(0.3);
-
-
-    //The pipe
-    pipe.create(0,498,'pipe').setScale(0.109);
-
-
-    // The player and its settings   // 300, 450,
-    player = this.physics.add.sprite(710,50, 'dude');
-    //  Player physics properties. Give the little guy a slight bounce.
-    player.setBounce(0.2);
-    player.setCollideWorldBounds(true);
-    //star.setCollideWorldBounds(true);
-   // bomb.setCollideWorldBounds(true);
+        var player;
+        var water;
+        var firewood;
+        var platforms;
+        var cursors;
+        var score = 0;
+        var gameOver = false;
+        var endText;
+        var inventory = [];
+        var inv;
+        var rock3;
+        var rock4;
+        var rock1;
+        var plant;
+        var i = 1;
+        var text;
 
 
-    //  Our player animations, turning, walking left and walking right.
-    this.anims.create({
-        key: 'left',
-        frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
-        frameRate: 10,
-        repeat: -1
-    });
 
-    this.anims.create({
-        key: 'turn',
-        frames: [ { key: 'dude', frame: 4 } ],
-        frameRate: 20
-    });
+        function create() {
 
-    this.anims.create({
-        key: 'right',
-        frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
-        frameRate: 10,
-        repeat: -1
-    });
+            this.add.image(400, 300, 'sky');
+            this.add.image(400, 290, "background").setScale(1.0);
+            this.add.image(450, 380, "mountains").setScale(0.5);
+            // this.add.image(400, 300, "layer4").setScale(0.5);
+            this.add.image(400, 400, "layer3").setScale(0.5);
+            this.add.image(400, 220, "clouds").setScale(0.5);
+            this.add.image(410, 270, "clouds").setScale(0.2);
+            this.add.image(850, 250, "clouds").setScale(0.5);
+            this.add.image(400, 250, "stars").setScale(0.4);
+            this.add.image(200, 150, "stars").setScale(0.4);
+            this.add.image(80, 500, "stars").setScale(0.4);
+            this.add.image(380, 390, "stars2").setScale(0.3);
+            this.add.image(500, 300, "stars2").setScale(0.3);
+            this.add.image(500, 300, "stars2").setScale(0.3);
+            text = this.add.text(16, 16, '', {
+                fontSize: '15px',
+                fill: '#ffffff'
+            });
+            //  this.add.image(400, 290, 'Cavern').setScale(1.0);
+            //  A simple background for our game
 
-    //  Input Events
-    cursors = this.input.keyboard.createCursorKeys();
+            //  The platforms group contains the ground and the 2 ledges we can jump on
+            platforms = this.physics.add.staticGroup();
 
-     //  Collide the player with the platforms
-     this.physics.add.collider(platforms, wood);
-     this.physics.add.collider(wall,wood);
-     this.physics.add.collider(player, platforms);
-     this.physics.add.collider(player, wall);
-     this.physics.add.collider(player, box);
-     //this.physics.add.collider(player, wood);
-     this.physics.add.collider(platforms, rock);
-     this.physics.add.collider(player, wallDoor);
-     this.physics.add.collider(openDoor, wallDoor);
-    //  this.physics.add.collider(star, platforms);
-    //  this.physics.add.collider(bomb, platforms);
 
-    /////
-    cursors = this.input.keyboard.createCursorKeys();
-    this.physics.add.overlap(player, rock, collectItem, null, this);
-    this.physics.add.overlap(player, vine, collectItem, null, this);
-    this.physics.add.overlap(player, smallwood, collectItem, null, this);
-    this.physics.add.overlap(player, door, collectItem, null, this);
+            wall = this.physics.add.staticGroup();
+            plant = this.physics.add.staticGroup();
+            staticWood = this.physics.add.staticGroup();
+            firewood = this.physics.add.staticGroup();
+            hiddenFloor = this.physics.add.staticGroup();
+            box = this.physics.add.staticGroup();
+            axe = this.physics.add.staticGroup();
+            vine = this.physics.add.staticGroup();
+            rock = this.physics.add.group();
+            smallwood = this.physics.add.group();
+            wood = this.physics.add.sprite(60, 480, 'wood').setScale(0.5);
+            waterfall = this.physics.add.staticGroup();
+            door = this.physics.add.staticGroup();
+            openDoor = this.physics.add.staticGroup();
+            tree = this.physics.add.staticGroup();
+            pipe = this.physics.add.staticGroup();
+            wallDoor = this.physics.add.staticGroup();
+
+
+
+
+
+            platforms.create(50, 583, 'ground').refreshBody();
+            platforms.create(140, 583, 'ground').refreshBody();
+            platforms.create(230, 583, 'ground').refreshBody();
+            platforms.create(320, 583, 'ground').refreshBody();
+            platforms.create(410, 583, 'ground').refreshBody();
+            platforms.create(500, 583, 'ground').refreshBody();
+            platforms.create(590, 583, 'ground').refreshBody();
+            platforms.create(680, 583, 'ground').refreshBody();
+            platforms.create(770, 583, 'ground').refreshBody();
+            hiddenFloor1 = hiddenFloor.create(382, 198, 'tinyWood');
+            hiddenFloor1.visible = false;
+
+
+            // the box
+            // box.create(250, 510, 'box').setScale(2);
+
+            //  Now let's create some ledges
+            wall.create(80, 360, 'wall');
+            // wall.create(50, 360, 'wall');
+            // wall.create(100, 360, 'wall');
+            // wall.create(150, 360, 'wall2');
+
+            // The vine in wall
+            vine.create(150, 390, 'vine');
+
+            staticWood1 = staticWood.create(725, 200, 'wood').setScale(0.5);
+
+            // door
+            // wallDoor.create(768, 130, 'wallDoor');
+            // wallDoor.create(710, 130, 'wallDoor');
+            wallDoor.create(720, 130, 'wall');
+            vine.create(660, 150, 'vine');
+            //The rock 
+            rock1 = rock.create(766, 550, 'rock');
+            rock1.anims.name = "first";
+            rock2 = rock.create(700, 550, 'rock');
+            rock2.anims.name = "second";
+
+            console.log(rock.getChildren());
+
+            //The wood
+            wood.angle = 30;
+            wood.setBounce(0.2);
+            wood.setCollideWorldBounds(true);
+
+
+            //The small wood
+            plant.create(10, 543, 'plant').setScale(1.5);
+            plant.create(700, 543, 'plant').setScale(1.5);
+            plant.create(20, 550, 'plant').setScale();
+            plant.create(30, 550, 'plant').setScale();
+            staticWood1.angle = -50;
+            smallwood2 = smallwood.create(30, 560, 'smallwood').setScale(2);
+            firewood.create(30, 555, 'firewood').setScale();
+
+            door.create(770, 58, 'door');
+
+            //The tree
+            tree.create(720, 490, 'tree');
+
+
+            plant.create(780, 543, 'plant').setScale(1.5);
+            plant.create(790, 552, 'plant').setScale();
+
+
+
+            water = this.physics.add.sprite(400, 850, 'sea');
+
+            inv = this.add.image(380, 70, 'inventory').setScale(2);
+
+            inv.visible = false;
+            player = this.physics.add.sprite(300, 450, 'dude');
+
+            player.setBounce(0.2);
+            player.setCollideWorldBounds(true);
+            water.setCollideWorldBounds(true);
+            water.allowGravity = false;
+            wood2 = this.physics.add.sprite(200, water.y, 'wood2').setScale(0.5);
+            wood2.setBounce(0.2);
+            wood2.setCollideWorldBounds(true);
+            // console.log(water);
+            // plant.create(723, 73, 'tree').setScale(0.3);
+            plant.create(724, 85, 'bush').setScale(0.3);
+            plant.create(10, 313, 'bush').setScale(0.3);
+            plant.create(40, 313, 'bush').setScale(0.3);
+
+
+
+            //  Our player animations, turning, walking left and walking right.
+            this.anims.create({
+                key: 'left',
+                frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
+                frameRate: 10,
+                repeat: -1
+            });
+
+            this.anims.create({
+                key: 'turn',
+                frames: [{ key: 'dude', frame: 4 }],
+                frameRate: 20
+            });
+
+            this.anims.create({
+                key: 'right',
+                frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
+                frameRate: 10,
+                repeat: -1
+            });
+
+            this.anims.create({
+                key: 'leftAxe',
+                frames: this.anims.generateFrameNumbers('dudeAxe', { start: 0, end: 3 }),
+                frameRate: 10,
+                repeat: -1
+            });
+
+            this.anims.create({
+                key: 'turnAxe',
+                frames: [{ key: 'dudeAxe', frame: 4 }],
+                frameRate: 20
+            });
+
+            this.anims.create({
+                key: 'rightAxe',
+                frames: this.anims.generateFrameNumbers('dudeAxe', { start: 5, end: 8 }),
+                frameRate: 10,
+                repeat: -1
+            });
+
+            //  Input Events
+            cursors = this.input.keyboard.createCursorKeys();
+
+            //  Collide the player with the platforms
+            this.physics.add.collider(platforms, wood);
+            this.physics.add.collider(platforms, wood2);
+            this.physics.add.collider(platforms, rock);
+            this.physics.add.collider(platforms, smallwood);
+            this.physics.add.collider(hiddenFloor, rock);
+            this.physics.add.collider(hiddenFloor, smallwood);
+            this.physics.add.collider(wood2, rock);
+            this.physics.add.collider(wall, wood);
+            this.physics.add.collider(water, wood2);
+            this.physics.add.collider(player, platforms);
+            this.physics.add.collider(player, hiddenFloor);
+            this.physics.add.collider(player, wall);
+            this.physics.add.overlap(player, water);
+            this.physics.add.collider(player, wallDoor);
+            this.physics.add.collider(openDoor, wallDoor);
+            this.physics.add.collider(platforms, rock);
+            this.physics.add.collider(player, wood2);
+
+
+            text.setText(
+                'Arrow keys to move and jump' +
+                '\nPress "X" to collect items and "B" to drop items' +
+                '\nPress "P" to hit ' +
+                '\nPress "A" to toggle inventory' +
+                '\nClick on an item to use it.'
+            );
+            /////
+            cursors = this.input.keyboard.createCursorKeys();
+            this.physics.add.overlap(player, rock, collectItem, null, this);
+            this.physics.add.overlap(player, vine, collectItem, null, this);
+            this.physics.add.overlap(player, wood);
+            this.physics.add.overlap(player, smallwood, collectItem, null, this);
+            this.physics.add.overlap(player, door, collectItem, null, this);
+
 
             this.x = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.X);
+            this.c = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.C);
+            wood2.disableBody(true, true);
 
             function collectItem(player, item) {
                 if (this.x.isDown) {
                     item.disableBody(true, true);
-                    if (item.texture.key === 'rock') {
-                        rock = this.add.image(400, 65, item.texture.key);
-                        addItem(rock);
-                    } else if (item.texture.key === 'vine') {
-                        vine = this.add.image(359, 65, item.texture.key);
-                        addItem(vine);
-                    }else if (item.texture.key === 'smallwood') {
-                        smallwood = this.add.image(359, 65, item.texture.key);
-                        addItem(smallwood);
-                    }else if (item.texture.key === 'door') {
-                        openDoor.create(770,58,'openDoor');
-                        item.disableBody(true, true);
+                    if (inv.visible) {
+                        if (item.texture.key === 'rock' && item.anims.name === "first") {
+                            rock3 = this.add.image(400, 25, item.texture.key).setScale(0.5);
+                            addItem(rock3);
+                        } else if (item.texture.key === 'rock' && item.anims.name === "second") {
+                            rock4 = this.add.image(445, 25, item.texture.key).setScale(0.5);
+                            addItem(rock4);
+                        } else if (item.texture.key === 'vine') {
+                            vine = this.add.image(359, 25, item.texture.key).setScale(0.5);
+                            addItem(vine);
+                        }
+                        else if (item.texture.key === 'smallwood') {
+                            smallwood = this.add.image(314, 25, item.texture.key);
+                            addItem(smallwood);
+                        } else if (item.texture.key === 'door') {
+                            openDoor.create(770, 58, 'openDoor');
+                            this.physics.pause();
+
+                            gameOver = true;
+                            endText = this.add.text(300, 250, 'Winner!', { fontSize: '50px', fill: '#fff' });
+                        }
+                    } else {
+                        if (item.texture.key === 'rock' && item.anims.name === "first") {
+                            rock3 = this.add.image(400, 25, item.texture.key).setScale(0.5);
+                            rock3.visible = false;
+                            addItem(rock3);
+                        } else if (item.texture.key === 'rock' && item.anims.name === "second") {
+                            rock4 = this.add.image(445, 25, item.texture.key).setScale(0.5);
+                            rock4.visible = false;
+                            addItem(rock4);
+                        } else if (item.texture.key === 'vine') {
+                            vine = this.add.image(359, 25, item.texture.key).setScale(0.5);
+                            vine.visible = false;
+                            addItem(vine);
+                        }
+                        else if (item.texture.key === 'smallwood') {
+                            smallwood = this.add.image(314, 25, item.texture.key);
+                            smallwood.visible = false;
+                            addItem(smallwood);
+                        } else if (item.texture.key === 'door') {
+                            openDoor.create(770, 58, 'openDoor');
+                            this.physics.pause();
+
+                            gameOver = true;
+                            endText = this.add.text(300, 250, 'Winner!', { fontSize: '50px', fill: '#fff' });
+
+                        }
                     }
                 }
             }
 
-            this.input.keyboard.on('keydown_' + 'A', function (event) {
+            this.input.keyboard.on('keydown_' + 'P', (event) => {
+                if (this.physics.overlap(player, wood) && slot5.classList.contains('white') && wood.angle < 90) {
+                    wood.angle += 10;
+                    if (wood.angle === 60) {
+                        wood.disableBody(true, true);
+                        wood2.enableBody(true, 100, 480, true, true);
+                        this.physics.add.collider(player, wood2);
+
+
+                    }
+                }
+            });
+
+            this.input.keyboard.on('keydown_' + 'A', (event) => {
                 if (inv.visible) {
                     inv.visible = false;
                     for (let item of inventory) {
                         item.visible = false;
                     }
+                    slot1.classList.remove('white');
+                    slot2.classList.remove('white');
+                    slot3.classList.remove('white');
+                    slot4.classList.remove('white');
+                    slot5.classList.remove('white');
+                    hiddenFloor1.disableBody(true, true);
+
                 } else {
                     inv.visible = true;
                     for (let item of inventory) {
                         item.visible = true;
                     }
+                    hiddenFloor1.enableBody(true, 382, 198, true);
 
                 }
             });
+
+            this.input.keyboard.on('keydown_' + 'B', (event) => {
+                if (inventory.includes(rock3) && slot3.classList.contains('white')) {
+                    rock1.enableBody(true, player.x, player.y, true, true);
+                    let index = inventory.indexOf(rock3);
+                    inventory[index].visible = false;
+                    inventory.splice(index, 1);
+                    slot3.classList.remove('white');
+
+                } else if (inventory.includes(rock4) && slot4.classList.contains('white')) {
+                    rock2.enableBody(true, player.x, player.y, true, true);
+                    let index = inventory.indexOf(rock4);
+                    inventory[index].visible = false;
+                    inventory.splice(index, 1);
+                    slot4.classList.remove('white');
+
+                } else if (inventory.includes(smallwood) && slot1.classList.contains('white')) {
+                    smallwood2.enableBody(true, player.x, player.y + 10, true, true);
+                    let index = inventory.indexOf(smallwood);
+                    inventory[index].visible = false;
+                    inventory.splice(index, 1);
+                    slot1.classList.remove('white');
+                }
+            });
+
 
             function addItem(item) {
                 inventory.push(item);
             }
 
-}
+            invDiv.addEventListener("click", (e) => {
+                if (e.target.id === "slot-1") {
+                    if (inventory.includes(smallwood) && inv.visible) {
+                        slot1.classList.toggle('white');
+                    }
+                } else if (e.target.id === "slot-2") {
+                    if (inventory.includes(vine) && inv.visible) {
+                        slot2.classList.toggle('white');
+                    }
+                } else if (e.target.id === "slot-3") {
+                    if (inventory.includes(rock3) && inv.visible) {
+                        slot3.classList.toggle('white');
+                    }
+                } else if (e.target.id === "slot-4") {
+                    if (inventory.includes(rock4) && inv.visible) {
+                        slot4.classList.toggle('white');
+                    }
+                } else if (e.target.id === "slot-5") {
+                    if (inventory.includes(axe) && inv.visible) {
+                        slot5.classList.toggle('white');
+                    }
+                } else if (e.target.id === "slot-6") {
+                    if (slot1.classList.contains('white') && slot2.classList.contains('white') && (slot3.classList.contains('white') || slot4.classList.contains('white'))) {
+                        axe = this.add.image(314, 65, 'axe').setScale(0.5);
+                        addItem(axe);
+
+                        let index = inventory.indexOf(vine);
+                        inventory[index].visible = false;
+                        inventory.splice(index, 1);
+                        let rockNumber = ((slot3.classList.contains('white')) ? rock3 : rock4);
+                        let index2 = inventory.indexOf(rockNumber);
+                        console.log(rockNumber);
+                        inventory[index2].visible = false;
+                        inventory.splice(index2, 1);
+                        let index3 = inventory.indexOf(smallwood);
+                        inventory[index3].visible = false;
+                        inventory.splice(index3, 1);
+                        slot1.classList.remove('white');
+                        slot2.classList.remove('white');
+                        slot3.classList.remove('white');
+                        slot4.classList.remove('white');
+                    }
+                }
+            });
+
+            slot6.addEventListener("mouseenter", (e) => {
+                if (inv.visible) {
+                    slot6.style.background = 'yellow';
+                    slot6.style.opacity = '0.5';
+                }
+            });
+
+            slot6.addEventListener("mouseleave", (e) => {
+                slot6.style.background = '';
+                slot6.style.opacity = '1';
+            });
+        }
 
 
 
 
-function update ()
-{
-    if (gameOver)
-    {
-        return;
-    }
+        function update() {
+            if (gameOver) {
+                return;
+            }
+            if (cursors.left.isDown && slot5.classList.contains('white')) {
+                player.setVelocityX(-160);
 
-    if (cursors.left.isDown)
-    {
-        player.setVelocityX(-160);
+                player.anims.play('leftAxe', true);
+            }
+            else if (cursors.right.isDown && slot5.classList.contains('white')) {
+                player.setVelocityX(160);
 
-        player.anims.play('left', true);
-    }
-    else if (cursors.right.isDown)
-    {
-        player.setVelocityX(160);
+                player.anims.play('rightAxe', true);
+            }
+            else if (cursors.left.isDown) {
+                player.setVelocityX(-160);
 
-        player.anims.play('right', true);
-    }
-    else
-    {
-        player.setVelocityX(0);
+                player.anims.play('left', true);
+            }
+            else if (cursors.right.isDown) {
+                player.setVelocityX(160);
 
-        player.anims.play('turn');
-    }
+                player.anims.play('right', true);
+            }
+            else if (slot5.classList.contains('white')) {
+                player.setVelocityX(0);
 
-     if (cursors.up.isDown && player.body.touching.down)
-    {
-        player.setVelocityY(-330);
-    }
-}
-</script>
+                player.anims.play('turnAxe');
+            }
+            else {
+                player.setVelocityX(0);
+
+                player.anims.play('turn');
+            }
 
 
-    </body>
-    </html>
+            if (cursors.up.isDown && player.body.touching.down) {
+                player.setVelocityY(-330);
+            }
+        }
+    </script>
+
+
+</body>
+
+</html>
